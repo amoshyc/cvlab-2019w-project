@@ -33,7 +33,7 @@ class CCPD5000:
 
 
 if __name__ == '__main__':
-    dataset = CCPD5000('./data/anns.json')
+    dataset = CCPD5000('./data/train/anns.json')
     print(len(dataset))
     
     img, kpt = dataset[-1]
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     img = tf.to_pil_image(img)
     vis = util.draw_plate(img, kpt)
     vis = util.draw_kpts(img, kpt)
-    vis.save('./test.png')
+    vis.save('./check.png')
 
     # dataloader = DataLoader(dataset, 50)
     # for img_b, kpt_b in tqdm(iter(dataloader)):

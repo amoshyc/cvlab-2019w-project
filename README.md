@@ -5,7 +5,9 @@
 ## Task
 
 Given 5000 images of car [^1] (260MB), detect the license plate and unwarp it.
+
 Each image is guaranteed with 1 license plate.
+
 The ground truth and metadata are encoded in the name of each image.
 
 To download & uncompress the dataset:
@@ -14,9 +16,8 @@ To download & uncompress the dataset:
 $ mkdir raw && cd raw/
 $ wget https://github.com/amoshyc/cvlab-2019w-project/releases/download/v0.1/ccpd5000.tar.gz
 $ tar zxvf ccpd5000.tar.gz
+$ ls ccpd5000/**/*.jpg | wc -l # expected 5000
 ```
-
-You can use `ls ccpd5000/*.jpg | wc -l` to check the number of images. Expected result is `5000`.
 
 [^1]: This is a subset of [CCPD](https://github.com/detectRecog/CCPD) dataset.
 

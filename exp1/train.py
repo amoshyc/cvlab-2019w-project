@@ -27,10 +27,8 @@ import util
 from dataset import CCPD5000
 from model import CCPDRegressor
 
-dataset = CCPD5000('./data/anns.json')
-pivot = len(dataset) * 4 // 5
-train_set = Subset(dataset, range(pivot))
-valid_set = Subset(dataset, range(pivot, len(dataset)))
+train_set = CCPD5000('./data/train/anns.json')
+valid_set = CCPD5000('./data/valid/anns.json')
 visul_set = ConcatDataset([
     Subset(train_set, random.sample(range(len(train_set)), 32)),
     Subset(valid_set, random.sample(range(len(valid_set)), 32)),
