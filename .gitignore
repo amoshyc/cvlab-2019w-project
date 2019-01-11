@@ -3,6 +3,7 @@ data/
 log/
 .vscode/
 *.png
+*.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

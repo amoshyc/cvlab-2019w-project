@@ -7,13 +7,13 @@ from PIL import Image, ImageDraw
 from skimage import util
 from skimage.transform import ProjectiveTransform, warp
 
-def draw_kpts(img, kpts, c='red', r=1.0):
+def draw_kpts(img, kpts, c='red', r=2.0):
     '''Draw keypoints on image.
     Args:
         img: (PIL.Image) will be modified
         kpts: (FloatTensor) keypoints in xy format, sized [8,]
         c: (PIL.Color) color of keypoints, default to 'red'
-        r: (float) radius of keypoints, default to 1.0
+        r: (float) radius of keypoints, default to 2.0
     Return:
         img: (PIL.Image) modified image
     '''
