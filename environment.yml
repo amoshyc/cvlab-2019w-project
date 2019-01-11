@@ -1,0 +1,45 @@
+name: ccpd
+channels:
+  - defaults
+dependencies:
+  - ca-certificates=2018.03.07=0
+  - certifi=2018.11.29=py36_0
+  - libedit=3.1.20170329=h6b74fdf_2
+  - libffi=3.2.1=hd88cf55_4
+  - libgcc-ng=8.2.0=hdf63c60_1
+  - libstdcxx-ng=8.2.0=hdf63c60_1
+  - ncurses=6.1=he6710b0_1
+  - openssl=1.1.1a=h7b6447c_0
+  - pip=18.1=py36_0
+  - python=3.6.8=h0371630_0
+  - readline=7.0=h7b6447c_5
+  - setuptools=40.6.3=py36_0
+  - sqlite=3.26.0=h7b6447c_0
+  - tk=8.6.8=hbc83047_0
+  - wheel=0.32.3=py36_0
+  - xz=5.2.4=h14c3975_4
+  - zlib=1.2.11=h7b6447c_3
+  - pip:
+    - cloudpickle==0.6.1
+    - cycler==0.10.0
+    - dask==1.0.0
+    - decorator==4.3.0
+    - kiwisolver==1.0.1
+    - matplotlib==3.0.2
+    - networkx==2.2
+    - numpy==1.15.4
+    - pandas==0.23.4
+    - pillow==5.4.1
+    - pyparsing==2.3.0
+    - python-dateutil==2.7.5
+    - pytz==2018.9
+    - pywavelets==1.0.1
+    - scikit-image==0.14.1
+    - scipy==1.2.0
+    - six==1.12.0
+    - toolz==0.9.0
+    - torch==1.0.0
+    - torchvision==0.2.1
+    - tqdm==4.29.0
+prefix: /home/amoshyc/miniconda3/envs/ccpd
+
