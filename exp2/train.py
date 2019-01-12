@@ -28,10 +28,8 @@ import util
 from dataset import CCPD5000
 from model import CCPDModel
 
-dataset = CCPD5000('./data/anns.json')
-pivot = len(dataset) * 4 // 5
-train_set = Subset(dataset, range(pivot))
-valid_set = Subset(dataset, range(pivot, len(dataset)))
+train_set = CCPD5000('./data/train/anns.json')
+valid_set = CCPD5000('./data/valid/anns.json')
 visul_set = ConcatDataset([
     Subset(train_set, random.sample(range(len(train_set)), 32)),
     Subset(valid_set, random.sample(range(len(valid_set)), 32)),
@@ -65,7 +63,7 @@ def train(pbar):
         losses.append(loss)
         pbar.set_postfix(loss=f'{loss:.5f}')
         pbar.update(img_b.size(0))
-    
+
     avg_loss = sum(losses)/len(losses)
     pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
     return avg_loss
@@ -85,7 +83,7 @@ def valid(pbar):
 
         pbar.set_postfix(loss=f'{loss:.5f}')
         pbar.update(img_b.size(0))
-    
+
     avg_loss = sum(losses)/len(losses)
     pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
     return avg_loss
@@ -107,7 +105,7 @@ def visul(pbar):
             vis = util.draw_kpts(vis, true_kpt, c='orange')
             vis = util.draw_kpts(vis, pred_kpt, c='red')
             vis.save(epoch_dir / f'{pbar.n:03d}.vis1.jpg')
-            
+
             lbls = torch.cat((true_lbl, pred_lbl), dim=0) # [8, H, W]
             lbls = lbls.unsqueeze(dim=1) # [8, 1, H, W]
             path = epoch_dir / f'{pbar.n:03d}.vis2.jpg'
@@ -144,7 +142,7 @@ for epoch in range(10):
     print('Epoch', epoch)
     with tqdm(total=len(train_set), desc='  Train') as pbar:
         train_loss = train(pbar)
-    
+
     with torch.no_grad():
         with tqdm(total=len(valid_set), desc='  Valid') as pbar:
             valid_loss = valid(pbar)
