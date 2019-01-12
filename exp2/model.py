@@ -12,7 +12,7 @@ class ConvBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(cout)
         self.act1 = nn.LeakyReLU()
         self.act2 = nn.LeakyReLU()
-    
+
     def forward(self, x):
         x = self.act1(self.bn1(self.conv1(x)))
         x = self.act1(self.bn2(self.conv2(x)))
@@ -49,6 +49,22 @@ class CCPDModel(nn.Module):
     def forward(self, x):
         x = self.layers(x)
         return x
+
+
+class CCPDLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, pred_lbl_b, true_lbl_b):
+        N, _, H, W = pred_lbl_b.size()
+        device = pred_lbl_b.device
+
+        loss_b = F.binary_cross_entropy(pred_lbl_b, true_lbl_b, reduction='none')
+        weight_b = torch.full((N, 4, H, W), 1.0, device=device)
+        weight_b[true_lbl_b > 1e-6] = 64.0
+        loss = (loss_b * weight_b).sum() / weight_b.sum()
+
+        return loss
 
 
 if __name__ == '__main__':

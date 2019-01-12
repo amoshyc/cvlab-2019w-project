@@ -26,7 +26,7 @@ torch.backends.cudnn.deterministic = True
 
 import util
 from dataset import CCPD5000
-from model import CCPDModel
+from model import CCPDModel, CCPDLoss
 
 train_set = CCPD5000('./data/train/anns.json')
 valid_set = CCPD5000('./data/valid/anns.json')
@@ -40,8 +40,8 @@ visul_loader = DataLoader(visul_set, 32, shuffle=False, num_workers=1)
 
 device = 'cuda'
 model = CCPDModel().to(device)
-criterion = nn.BCELoss().to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=5e-4)
+criterion = CCPDLoss().to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=2e-4)
 
 log_dir = Path('./log/') / f'{datetime.now():%Y.%m.%d-%H:%M:%S}'
 log_dir.mkdir(parents=True)
