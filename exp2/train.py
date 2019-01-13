@@ -6,8 +6,6 @@ from pathlib import Path
 from datetime import datetime
 
 import pandas as pd
-import matplotlib as mpl
-mpl.use('svg')
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 
@@ -162,7 +160,7 @@ def log(epoch, train_loss, valid_loss):
 
 
 for epoch in range(20):
-    print('Epoch', epoch)
+    print('Epoch', epoch, flush=True)
     with tqdm(total=len(train_set), desc='  Train') as pbar:
         train_loss = train(pbar)
 
