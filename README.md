@@ -13,7 +13,6 @@ The ground truth and metadata are encoded in the name of each image.
 To download & uncompress the dataset:
 
 ```sh
-$ mkdir raw && cd raw/
 $ wget https://github.com/amoshyc/cvlab-2019w-project/releases/download/v0.1/ccpd5000.tar.gz
 $ tar zxvf ccpd5000.tar.gz
 $ ls ccpd5000/**/*.jpg | wc -l # expected 5000

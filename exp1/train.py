@@ -13,10 +13,13 @@ plt.style.use('seaborn')
 
 import torch
 from torch import nn
+from torch.nn import functional as F
+from torchvision.utils import save_image
 from torch.utils.data import Subset, ConcatDataset, DataLoader
 from torchvision.transforms import functional as tf
 
 # For reproducibility
+# Set before loading model and dataset
 seed = 999
 random.seed(seed)
 np.random.seed(seed)
@@ -44,10 +47,20 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 log_dir = Path('./log/') / f'{datetime.now():%Y.%m.%d-%H:%M:%S}'
 log_dir.mkdir(parents=True)
+print(log_dir)
+history = {
+    'train_mae': [],
+    'valid_mae': [],
+    'train_mse': [],
+    'valid_mse': [],
+}
+
 
 def train(pbar):
     model.train()
-    losses = []
+    mae_steps = []
+    mse_steps = []
+
     for img_b, kpt_b in iter(train_loader):
         img_b = img_b.to(device)
         kpt_b = kpt_b.to(device)
@@ -58,37 +71,48 @@ def train(pbar):
         loss.backward()
         optimizer.step()
 
-        loss = loss.detach().item()
-        losses.append(loss)
-        pbar.set_postfix(loss=f'{loss:.5f}')
+        mae = loss.detach().item()
+        mse = F.mse_loss(pred_b.detach(), kpt_b.detach()).item()
+        mae_steps.append(mae)
+        mse_steps.append(mse)
+
+        pbar.set_postfix(mae=mae, mse=mse)
         pbar.update(img_b.size(0))
-    
-    avg_loss = sum(losses)/len(losses)
-    pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
-    return avg_loss
+
+    avg_mae = sum(mae_steps) / len(mae_steps)
+    avg_mse = sum(mse_steps) / len(mse_steps)
+    pbar.set_postfix(avg_mae=f'{avg_mae:.5f}', avg_mse=f'{avg_mse:.5f}')
+    history['train_mae'].append(avg_mae)
+    history['train_mse'].append(avg_mse)
 
 
 def valid(pbar):
     model.eval()
-    losses = []
+    mae_steps = []
+    mse_steps = []
+
     for img_b, kpt_b in iter(valid_loader):
         img_b = img_b.to(device)
         kpt_b = kpt_b.to(device)
         pred_b = model(img_b)
-
         loss = criterion(pred_b, kpt_b)
-        loss = loss.detach().item()
-        losses.append(loss)
+        mae = loss.detach().item()
 
-        pbar.set_postfix(loss=f'{loss:.5f}')
+        mse = F.mse_loss(pred_b.detach(), kpt_b.detach()).item()
+        mae_steps.append(mae)
+        mse_steps.append(mse)
+
+        pbar.set_postfix(mae=mae, mse=mse)
         pbar.update(img_b.size(0))
-    
-    avg_loss = sum(losses)/len(losses)
-    pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
-    return avg_loss
+
+    avg_mae = sum(mae_steps) / len(mae_steps)
+    avg_mse = sum(mse_steps) / len(mse_steps)
+    pbar.set_postfix(avg_mae=f'{avg_mae:.5f}', avg_mse=f'{avg_mse:.5f}')
+    history['valid_mae'].append(avg_mae)
+    history['valid_mse'].append(avg_mse)
 
 
-def visul(pbar):
+def visul(pbar, epoch):
     model.eval()
     epoch_dir = log_dir / f'{epoch:03d}'
     epoch_dir.mkdir()
@@ -103,38 +127,31 @@ def visul(pbar):
             pbar.update()
 
 
-def log(epoch, train_loss, valid_loss):
-    csv_path = log_dir / 'log.csv'
-    if csv_path.exists():
-        df = pd.read_csv(csv_path)
-    else:
-        df = pd.DataFrame()
+def log(epoch):
+    with (log_dir / 'metrics.json').open('w') as f:
+        json.dump(history, f)
 
-    metrics = {
-        'epoch': epoch,
-        'train_loss': train_loss,
-        'valid_loss': valid_loss,
-    }
-    df = df.append(metrics, ignore_index=True)
-    df.to_csv(csv_path, index=False)
-
-    fig, ax = plt.subplots(dpi=100, figsize=(10, 5))
-    df[['train_loss', 'valid_loss']].plot(kind='line', ax=ax)
-    fig.savefig(str(log_dir / 'loss.svg'))
+    fig, ax = plt.subplots(2, 1, figsize=(10, 10), dpi=100)
+    ax[0].set_title('MAE')
+    ax[0].plot(range(epoch + 1), history['train_mae'], label='Train')
+    ax[0].plot(range(epoch + 1), history['valid_mae'], label='Valid')
+    ax[0].legend()
+    ax[1].set_title('MSE')
+    ax[1].plot(range(epoch + 1), history['train_mse'], label='Train')
+    ax[1].plot(range(epoch + 1), history['valid_mse'], label='Valid')
+    ax[1].legend()
+    fig.savefig(log_dir / 'metrics.jpg')
     plt.close()
 
-    if df['valid_loss'].idxmin() == epoch:
-        torch.save(model, log_dir / 'model.pth')
 
-
-for epoch in range(10):
+for epoch in range(20):
     print('Epoch', epoch)
     with tqdm(total=len(train_set), desc='  Train') as pbar:
-        train_loss = train(pbar)
-    
+        train(pbar)
+
     with torch.no_grad():
         with tqdm(total=len(valid_set), desc='  Valid') as pbar:
-            valid_loss = valid(pbar)
+            valid(pbar)
         with tqdm(total=len(visul_set), desc='  Visul') as pbar:
-            visul(pbar)
-        log(epoch, train_loss, valid_loss)
+            visul(pbar, epoch)
+        log(epoch)

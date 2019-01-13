@@ -13,11 +13,13 @@ plt.style.use('seaborn')
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 from torchvision.utils import save_image
 from torch.utils.data import Subset, ConcatDataset, DataLoader
 from torchvision.transforms import functional as tf
 
 # For reproducibility
+# Set before loading model and dataset
 seed = 999
 random.seed(seed)
 np.random.seed(seed)
@@ -41,72 +43,100 @@ visul_loader = DataLoader(visul_set, 32, shuffle=False, num_workers=1)
 device = 'cuda'
 model = CCPDModel().to(device)
 criterion = CCPDLoss().to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=2e-4)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 log_dir = Path('./log/') / f'{datetime.now():%Y.%m.%d-%H:%M:%S}'
 log_dir.mkdir(parents=True)
+print(log_dir)
+history = {
+    'train_bce': [],
+    'valid_bce': [],
+    'train_mse': [],
+    'valid_mse': []
+}
 
 def train(pbar):
     model.train()
-    losses = []
-    for img_b, lbl_b in iter(train_loader):
+    bce_steps = []
+    mse_steps = []
+
+    for img_b, lbl_true_b, kpt_true_b in iter(train_loader):
         img_b = img_b.to(device)
-        lbl_b = lbl_b.to(device)
+        lbl_true_b = lbl_true_b.to(device)
+        kpt_true_b = kpt_true_b.to(device)
 
         optimizer.zero_grad()
-        pred_b = model(img_b)
-        loss = criterion(pred_b, lbl_b)
+        lbl_pred_b = model(img_b)
+        loss = criterion(lbl_pred_b, lbl_true_b)
         loss.backward()
         optimizer.step()
 
-        loss = loss.detach().item()
-        losses.append(loss)
-        pbar.set_postfix(loss=f'{loss:.5f}')
+        bce = loss.detach().item()
+        bce_steps.append(bce)
+        kpt_pred_b = util.peek2d(lbl_pred_b.detach())
+        mse = F.mse_loss(kpt_pred_b, kpt_true_b).item()
+        mse_steps.append(mse)
+
+        pbar.set_postfix(bce=bce, mse=mse)
         pbar.update(img_b.size(0))
 
-    avg_loss = sum(losses)/len(losses)
-    pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
-    return avg_loss
+    avg_bce = sum(bce_steps) / len(bce_steps)
+    avg_mse = sum(mse_steps) / len(mse_steps)
+    pbar.set_postfix(avg_bce=f'{avg_bce:.5f}', avg_mse=f'{avg_mse:.5f}')
+    history['train_bce'].append(avg_bce)
+    history['train_mse'].append(avg_mse)
 
 
 def valid(pbar):
     model.eval()
-    losses = []
-    for img_b, lbl_b in iter(valid_loader):
+    bce_steps = []
+    mse_steps = []
+
+    for img_b, lbl_true_b, kpt_true_b in iter(valid_loader):
         img_b = img_b.to(device)
-        lbl_b = lbl_b.to(device)
-        pred_b = model(img_b)
+        lbl_true_b = lbl_true_b.to(device)
+        kpt_true_b = kpt_true_b.to(device)
 
-        loss = criterion(pred_b, lbl_b)
-        loss = loss.detach().item()
-        losses.append(loss)
+        lbl_pred_b = model(img_b)
+        loss = criterion(lbl_pred_b, lbl_true_b)
 
-        pbar.set_postfix(loss=f'{loss:.5f}')
+        bce = loss.detach().item()
+        bce_steps.append(bce)
+        kpt_pred_b = util.peek2d(lbl_pred_b.detach())
+        mse = F.mse_loss(kpt_pred_b, kpt_true_b).item()
+        mse_steps.append(mse)
+
+        pbar.set_postfix(bce=bce, mse=mse)
         pbar.update(img_b.size(0))
 
-    avg_loss = sum(losses)/len(losses)
-    pbar.set_postfix(avg_loss=f'{avg_loss:.5f}')
-    return avg_loss
+    avg_bce = sum(bce_steps) / len(bce_steps)
+    avg_mse = sum(mse_steps) / len(mse_steps)
+    pbar.set_postfix(avg_bce=f'{avg_bce:.5f}', avg_mse=f'{avg_mse:.5f}')
+    history['valid_bce'].append(avg_bce)
+    history['valid_mse'].append(avg_mse)
 
 
 def visul(pbar):
     model.eval()
     epoch_dir = log_dir / f'{epoch:03d}'
     epoch_dir.mkdir()
-    for img_b, lbl_b in iter(visul_loader):
-        pred_b = model(img_b.to(device)).cpu()
+    for img_b, lbl_true_b, kpt_true_b in iter(visul_loader):
+        lbl_pred_b = model(img_b.to(device)).cpu()
+        kpt_pred_b = util.peek2d(lbl_pred_b)
 
-        for img, pred_lbl, true_lbl in zip(img_b, pred_b, lbl_b):
-            img = tf.to_pil_image(img)
-            true_kpt = util.peek2d(true_lbl)
-            pred_kpt = util.peek2d(pred_lbl)
+        for i in range(img_b.size(0)):
+            img = tf.to_pil_image(img_b[i])
+            lbl_true = lbl_true_b[i]
+            lbl_pred = lbl_pred_b[i]
+            kpt_true = kpt_true_b[i]
+            kpt_pred = kpt_pred_b[i]
 
-            vis = util.draw_plate(img, pred_kpt)
-            vis = util.draw_kpts(vis, true_kpt, c='orange')
-            vis = util.draw_kpts(vis, pred_kpt, c='red')
+            vis = util.draw_plate(img, kpt_pred)
+            vis = util.draw_kpts(vis, kpt_true, c='orange')
+            vis = util.draw_kpts(vis, kpt_pred, c='red')
             vis.save(epoch_dir / f'{pbar.n:03d}.vis1.jpg')
 
-            lbls = torch.cat((true_lbl, pred_lbl), dim=0) # [8, H, W]
+            lbls = torch.cat((lbl_true, lbl_pred), dim=0) # [8, H, W]
             lbls = lbls.unsqueeze(dim=1) # [8, 1, H, W]
             path = epoch_dir / f'{pbar.n:03d}.vis2.jpg'
             save_image(lbls, path, pad_value=1, nrow=4)
@@ -115,30 +145,23 @@ def visul(pbar):
 
 
 def log(epoch, train_loss, valid_loss):
-    csv_path = log_dir / 'log.csv'
-    if csv_path.exists():
-        df = pd.read_csv(csv_path)
-    else:
-        df = pd.DataFrame()
+    with (log_dir / 'metrics.json').open('w') as f:
+        json.dump(history, f)
 
-    metrics = {
-        'epoch': epoch,
-        'train_loss': train_loss,
-        'valid_loss': valid_loss,
-    }
-    df = df.append(metrics, ignore_index=True)
-    df.to_csv(csv_path, index=False)
-
-    fig, ax = plt.subplots(dpi=100, figsize=(10, 5))
-    df[['train_loss', 'valid_loss']].plot(kind='line', ax=ax)
-    fig.savefig(str(log_dir / 'loss.svg'))
+    fig, ax = plt.subplots(2, 1, figsize=(10, 10), dpi=100)
+    ax[0].set_title('BCE')
+    ax[0].plot(range(epoch + 1), history['train_bce'], label='Train')
+    ax[0].plot(range(epoch + 1), history['valid_bce'], label='Valid')
+    ax[0].legend()
+    ax[1].set_title('MSE')
+    ax[1].plot(range(epoch + 1), history['train_mse'], label='Train')
+    ax[1].plot(range(epoch + 1), history['valid_mse'], label='Valid')
+    ax[1].legend()
+    fig.savefig(log_dir / 'metrics.jpg')
     plt.close()
 
-    if df['valid_loss'].idxmin() == epoch:
-        torch.save(model, log_dir / 'model.pth')
 
-
-for epoch in range(10):
+for epoch in range(20):
     print('Epoch', epoch)
     with tqdm(total=len(train_set), desc='  Train') as pbar:
         train_loss = train(pbar)

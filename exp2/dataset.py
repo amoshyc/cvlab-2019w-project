@@ -30,29 +30,30 @@ class CCPD5000:
 
         lblH, lblW = 80, 48
         kpt = torch.FloatTensor(ann['kpt'])
-        kpt = kpt * torch.FloatTensor([lblW, lblH])
-        kpt = kpt.long()
+        loc = kpt * torch.FloatTensor([lblW, lblH])
+        loc = loc.long()
 
         lbl = torch.zeros(4, lblH, lblW)
-        for i, (x, y) in enumerate(kpt):
+        for i, (x, y) in enumerate(loc):
             rr, cc, g = util.gaussian2d([y, x], [3, 3], shape=(lblH, lblW))
             lbl[i, rr, cc] = torch.max(lbl[i, rr, cc], g / g.max())
-        
-        return img, lbl
+
+        return img, lbl, kpt
 
 
 if __name__ == '__main__':
     dataset = CCPD5000('./data/train/anns.json')
     print(len(dataset))
-    
-    img, lbl = dataset[-1]
+
+    img, lbl, kpt_true = dataset[-1]
     print(img.size())
     print(lbl.size())
 
-    kpt = util.peek2d(lbl)
+    kpt_pred = util.peek2d(lbl.unsqueeze(dim=0))
     img = tf.to_pil_image(img)
-    vis = util.draw_plate(img, kpt)
-    vis = util.draw_kpts(img, kpt)
+    vis = util.draw_plate(img, kpt_pred)
+    vis = util.draw_kpts(img, kpt_true, c='orange')
+    vis = util.draw_kpts(img, kpt_pred, c='red')
     vis.save('./check.png')
 
     # dataloader = DataLoader(dataset, 50)

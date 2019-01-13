@@ -16,7 +16,7 @@ def process(src_dir, dst_dir, img_size):
     desc = f'{src_dir} -> {dst_dir}'
     for img_path in tqdm(img_paths, desc=desc):
         dst_path = dst_dir / img_path.name
-        
+
         img = Image.open(img_path)
         src_size = img.size # [w, h]
         img = img.convert('RGB')
@@ -39,7 +39,7 @@ def process(src_dir, dst_dir, img_size):
 
 
 img_size = (192, 320)
-dataset_dir = Path('../raw/ccpd5000/')
+dataset_dir = Path('../ccpd5000/')
 target_dir = Path('./data/')
 if target_dir.exists():
     rmtree(str(target_dir))

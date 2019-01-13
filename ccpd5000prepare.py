@@ -8,7 +8,7 @@ seed = 999
 random.seed(seed)
 
 src_dir = Path('~/ccpd_dataset/ccpd_base/').expanduser().resolve()
-dst_dir = Path('./raw/ccpd5000/')
+dst_dir = Path('./ccpd5000/')
 train_dir = dst_dir / 'train'
 valid_dir = dst_dir / 'valid'
 if dst_dir.exists():
@@ -28,3 +28,5 @@ for img_path in tqdm(train_img_paths, desc='Train'):
     copy(img_path, str(train_dir))
 for img_path in tqdm(valid_img_paths, desc='Valid'):
     copy(img_path, str(valid_dir))
+
+# tar zcvf ccpd5000.tar.gz ./ccpd5000/

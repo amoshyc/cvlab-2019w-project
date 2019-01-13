@@ -69,13 +69,19 @@ def gaussian2d(mu, sigma, shape):
 
 
 def peek2d(lbl):
-    _, H, W = lbl.size()
-    lbl = lbl.view(4, -1) # [4, H * W]
-    loc = lbl.argmax(dim=1, keepdim=True) # [4, 1]
-    rr, cc = loc / W, loc % W # [4, 1], [4, 1]
-    kpt = torch.cat((rr, cc), dim=1) # [4, 2]
-    kpt = kpt.float() / torch.FloatTensor([H, W])
-    kpt = kpt[:, [1, 0]] # rc -> xy
+    '''
+    Args:
+        lbl: (FloatTensor) sized [N, 4, H, W]
+    Return:
+        kpt: (FloatTensor) sized [N, 4, 2]
+    '''
+    N, _, H, W = lbl.size()
+    device = lbl.device
+    lbl = lbl.view(N, 4, H * W)
+    loc = lbl.argmax(dim=2) # [N, 4]
+    yy, xx = loc / W, loc % W # [N, 4], [N, 4]
+    kpt = torch.stack((xx, yy), dim=2) # [N, 4, 2]
+    kpt = kpt.float() / torch.FloatTensor([W, H]).to(device)
     return kpt
 
 
