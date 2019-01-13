@@ -51,6 +51,8 @@ $ python prepare.py
 $ CUDA_VISIBLE_DEVICES="0" python train.py
 ```
 
+[Colab Version](https://colab.research.google.com/drive/1FwUJHgBSR8DCnp9900OEJ1EG7RZf5tXN)
+
 ## exp2
 
 Predict the coordinates by 4 heatmaps where each heatmap:
