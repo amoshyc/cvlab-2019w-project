@@ -94,8 +94,8 @@ def valid(pbar):
         kpt_b = kpt_b.to(device)
         pred_b = model(img_b)
         loss = criterion(pred_b, kpt_b)
-        mae = loss.detach().item()
 
+        mae = loss.detach().item()
         mse = F.mse_loss(pred_b.detach(), kpt_b.detach()).item()
         mae_steps.append(mae)
         mse_steps.append(mse)

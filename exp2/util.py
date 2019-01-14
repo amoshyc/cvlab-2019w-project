@@ -60,11 +60,9 @@ def gaussian2d(mu, sigma, shape):
     gr = torch.exp(-0.5 * ((rr - r) / sr)**2) / (torch.sqrt(2 * pi) * sr)
     gc = torch.exp(-0.5 * ((cc - c) / sc)**2) / (torch.sqrt(2 * pi) * sc)
     g = torch.ger(gr, gc).view(-1)
-    R, C = len(rr), len(cc)
-    rr = rr.long().contiguous().view(R, 1)
-    cc = cc.long().contiguous().view(1, C)
-    rr = rr.expand(R, C).contiguous().view(-1)
-    cc = cc.expand(R, C).contiguous().view(-1)
+    rr, cc = torch.meshgrid(rr.long(), cc.long())
+    rr = rr.contiguous().view(-1)
+    cc = cc.contiguous().view(-1)
     return rr, cc, g
 
 

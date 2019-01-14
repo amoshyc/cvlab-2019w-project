@@ -36,7 +36,7 @@ class CCPD5000:
         lbl = torch.zeros(4, lblH, lblW)
         for i, (x, y) in enumerate(loc):
             rr, cc, g = util.gaussian2d([y, x], [3, 3], shape=(lblH, lblW))
-            lbl[i, rr, cc] = torch.max(lbl[i, rr, cc], g / g.max())
+            lbl[i, rr, cc] = g / g.max()
 
         return img, lbl, kpt
 
