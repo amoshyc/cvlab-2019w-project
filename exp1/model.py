@@ -12,7 +12,7 @@ class ConvBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(cout)
         self.act1 = nn.LeakyReLU()
         self.act2 = nn.LeakyReLU()
-    
+
     def forward(self, x):
         x = self.act1(self.bn1(self.conv1(x)))
         x = self.act1(self.bn2(self.conv2(x)))
@@ -50,6 +50,6 @@ class CCPDRegressor(nn.Module):
 if __name__ == '__main__':
     device = 'cuda'
     model = CCPDRegressor().to(device)
-    img_b = torch.rand(16, 3, 192, 320).to(device)
+    img_b = torch.rand(16, 3, 320, 192).to(device)
     out_b = model(img_b)
     print(out_b.size())
