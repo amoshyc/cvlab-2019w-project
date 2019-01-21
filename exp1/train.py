@@ -141,6 +141,9 @@ def log(epoch):
     fig.savefig(log_dir / 'metrics.jpg')
     plt.close()
 
+    if torch.tensor(history['valid_mse']).argmin() == epoch:
+        torch.save(model.state_dict(), str(log_dir / 'model.pth'))
+
 
 for epoch in range(20):
     print('Epoch', epoch, flush=True)

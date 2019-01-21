@@ -1,9 +1,11 @@
 ccpd5000/
 data/
 log/
+test/
 .vscode/
 *.png
 *.tar.gz
+test_*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
